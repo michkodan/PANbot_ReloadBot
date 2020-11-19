@@ -34,19 +34,21 @@ def posts_from_channels(msg):
                     try:
                         bot.send_photo(user, photo_id, caption=msg.caption)
                     except Exception as e:
-                        bot.send_message(249340397, f'ID {user} не найден при попытке отправить инфу про старты\n'
-                                                    f'Ошибка: {e}')
+                        bot.send_message(MainConfig.ADMIN_ID,
+                                         f'ID {user} не найден при попытке отправить инфу про старты\n'
+                                         f'Ошибка: {e}')
         else:
             if '#стартпродаж' in msg.text:
                 for user in MainConfig.ADMINS:
                     try:
                         bot.send_message(user, msg.text)
                     except Exception as e:
-                        bot.send_message(249340397, f'ID {user} не найден при попытке отправить инфу про старты\n'
-                                                    f'Ошибка: {e}')
+                        bot.send_message(MainConfig.ADMIN_ID,
+                                         f'ID {user} не найден при попытке отправить инфу про старты\n'
+                                         f'Ошибка: {e}')
     except Exception as e:
-        bot.send_message(249340397, f'Бот упал:\n'
-                                    f'{e}')
+        bot.send_message(MainConfig.ADMIN_ID, f'Бот упал при поптыке отправить информацию о стартах:\n'
+                                              f'{e}')
 
 
 # Административные команды
@@ -57,8 +59,16 @@ def admin(msg):
             msg_text = msg.text
             msg_text_format = msg_text.replace('mailing', '')
             users = GetUsers()
-            for user in users.get_users():
-                bot.send_message(user, msg_text_format)
+            try:
+                for user in users.get_users():
+                    try:
+                        bot.send_message(user, msg_text_format)
+                    except Exception as e:
+                        bot.send_message(MainConfig.ADMIN_ID, f'Бот не отправил расслыку. Упало на пользователе: {user}'
+                                                              f'. Ошибка: {e}')
+            except Exception as e:
+                bot.send_message(MainConfig.ADMIN_ID, f'При попытке отправить рассылку возникла проблема с запросом.'
+                                                      f'Ошибка: {e}')
 
         if 'count' in msg.text:
             users = GetUsers()
@@ -86,7 +96,7 @@ def admin(msg):
 # Подкючение к боту
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_true' or msg.data == 'bot_reconnect')
 def new_user_btn(msg):
-    bot.send_message(249340397, f'Попытка подключится к боту!')
+    bot.send_message(MainConfig.ADMIN_ID, f'Попытка подключится к боту!')
     link = 'new.panpartner.ru/bot/' + str(msg.from_user.id)
     bot_connected = types.InlineKeyboardMarkup(row_width=1)
     url_button = types.InlineKeyboardButton(text="Подключится к боту 🤖", url=link)
@@ -115,12 +125,13 @@ def connection_check_btn(msg):
         else:
             bot.send_message(msg.from_user.id, text='Вы еще не подключены к боту 😞',
                              reply_markup=buttons.bot_reconnect)
+            bot.send_message(MainConfig.ADMIN_ID, 'Попытка проверить подключение, до синхронизации с ботом.')
     except Exception as e:
         bot.send_message(msg.message.chat.id, f'Ой, схемы замкнуло 🤖\nНажмите на кнопку ниже, '
                                               f'чтобы перезапустить меня ⬇️',
                          parse_mode=['html'], reply_markup=buttons.bot_reconnect)
-        bot.send_message(249340397, f'Бот упал:\n'
-                                    f'{e}')
+        bot.send_message(MainConfig.ADMIN_ID, f'Бот упал после попытки проверить подключение:\n'
+                                              f'{e}')
 
 
 # Проверка наличия поключения к базе

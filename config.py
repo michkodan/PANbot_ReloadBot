@@ -3,7 +3,9 @@ class MainConfig:
     URL = 'https://dev2.panpartner.ru/bitrix/services/main/ajax.php?c=panpartner:'
     LOGIN = 'michkodan@1-an.ru'
     PASSWORD = 'Michkodan(29)'
-    ADMINS = [249340397, 350486046]
+    # ADMINS = [249340397, 350486046]
+    ADMINS = [249340397]
+    ADMIN_ID = 249340397
     CONNECTION_TEXT = '''
 Синхронизация с <b>ПАН Партнер</b> прошла успешно🤖
 Моментально получайте только самую важную информацию:

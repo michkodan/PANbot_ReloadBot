@@ -17,5 +17,7 @@ class CheckConnect(MainConfig):
             data = request.json()
             if data['data']['status']:
                 return True
+            else:
+                return False
         except Exception as e:
             return e
