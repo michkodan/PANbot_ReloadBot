@@ -1,6 +1,6 @@
 class MainConfig:
     TOKEN = '722289223:AAHb0GG5Zm1YM-bDVNTNBuU6WblwpM2btGE'
-    URL = 'https://dev2.panpartner.ru/bitrix/services/main/ajax.php?c=panpartner:'
+    URL = 'https://panpartner.ru/bitrix/services/main/ajax.php?c=panpartner:'
     LOGIN = 'michkodan@1-an.ru'
     PASSWORD = 'Michkodan(29)'
     ADMINS = [249340397, 350486046]
