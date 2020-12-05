@@ -8,9 +8,18 @@ from telebot import types
 from config import MainConfig
 from usersOnline import UsersOnline
 from usersReload import UsersReload
+from version import *
+# from events import Events
+
 
 bot = telebot.TeleBot(MainConfig.TOKEN)
 bot.get_updates(allowed_updates=['channel_post', 'message', 'callback_query'])
+
+try:
+    get_version()
+    set_version()
+except Exception as e:
+    bot.send_message(MainConfig.ADMIN_ID, f'Версия не была установлена. Ошибка: {e}')
 
 
 @bot.message_handler(commands=['start'])
@@ -22,33 +31,65 @@ def send_welcome(msg):
                          reply_markup=buttons.welcome_buttons)
 
 
+# Забираем посты про старты из телеграм канала
 @bot.channel_post_handler(content_types=['text', 'photo', 'video'])
 def posts_from_channels(msg):
     users = GetUsers()
     try:
         if msg.content_type == 'photo':
             if '#стартпродаж' in msg.caption:
-                photo_data = msg.json
-                photo_id = photo_data['photo'][1]['file_id']
                 for user in users.get_users():
                     try:
-                        bot.send_photo(user, photo_id, caption=msg.caption)
+                        bot.forward_message(user, msg.chat.id, msg.message_id)
                     except Exception as e:
                         bot.send_message(MainConfig.ADMIN_ID,
                                          f'ID {user} не найден при попытке отправить инфу про старты\n'
-                                         f'Ошибка: {e}')
-        else:
-            if '#стартпродаж' in msg.text:
-                for user in MainConfig.ADMINS:
+                                         f'Ошибка: {e}. Тип рассылки: Фото')
+
+        if msg.content_type == 'video':
+            if '#стартпродаж' in msg.caption:
+                for user in users.get_users():
                     try:
-                        bot.send_message(user, msg.text)
+                        bot.forward_message(user, msg.chat.id, msg.message_id)
                     except Exception as e:
                         bot.send_message(MainConfig.ADMIN_ID,
                                          f'ID {user} не найден при попытке отправить инфу про старты\n'
-                                         f'Ошибка: {e}')
+                                         f'Ошибка: {e}. Тип рассылки: Видео')
+
+        if '#стартпродаж' in msg.text:
+            for user in MainConfig.ADMINS:
+                try:
+                    bot.forward_message(user, msg.chat.id, msg.message_id)
+                except Exception as e:
+                    bot.send_message(MainConfig.ADMIN_ID,
+                                     f'ID {user} не найден при попытке отправить инфу про старты\n'
+                                     f'Ошибка: {e}. Тип рассылки: Текст')
+
     except Exception as e:
-        bot.send_message(MainConfig.ADMIN_ID, f'Бот упал при поптыке отправить информацию о стартах:\n'
-                                              f'{e}')
+        pass
+
+
+# Мероприятия
+# @bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
+# def events_approve(msg):
+#     try:
+#         event_id = msg.data.replace('confirm ', '')
+#         user_id = msg.from_user.id
+#         confirm = Events(int(event_id), int(user_id))
+#         bot.send_message(msg.from_user.id, text=confirm.confirm_entry())
+#     except Exception as e:
+#         bot.send_message(msg.from_user.id, text='Подтвердить запись невозможно')
+#
+#
+# @bot.callback_query_handler(func=lambda msg: 'cancel' in msg.data)
+# def events_approve(msg):
+#     try:
+#         event_id = msg.data.replace('cancel ', '')
+#         user_id = msg.from_user.id
+#         confirm = Events(int(event_id), int(user_id))
+#         bot.send_message(msg.from_user.id, text=confirm.cancel_entry())
+#     except Exception as e:
+#         bot.send_message(msg.from_user.id, text='Отменить запись невозможно')
 
 
 # Административные команды
@@ -92,6 +133,12 @@ def admin(msg):
             except Exception as e:
                 bot.send_message(msg.from_user.id, text=e)
 
+        if 'version' in msg.text:
+            try:
+                bot.send_message(msg.from_user.id, text=f'Версия бота: {get_version()}')
+            except Exception as e:
+                bot.send_message(msg.from_user.id, text=e)
+
 
 @bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
 def events_approve(msg):
@@ -112,8 +159,10 @@ def events_approve(msg):
 # Подкючение к боту
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_true' or msg.data == 'bot_reconnect')
 def new_user_btn(msg):
+    bot.answer_callback_query(msg.id)
     bot.send_message(MainConfig.ADMIN_ID, f'Попытка подключится к боту!')
     link = 'new.panpartner.ru/bot/' + str(msg.from_user.id)
+    # link = 'dev2.panpartner.ru/app/bot/' + str(msg.from_user.id)
     bot_connected = types.InlineKeyboardMarkup(row_width=1)
     url_button = types.InlineKeyboardButton(text="Подключится к боту 🤖", url=link)
     connected_button = types.InlineKeyboardButton('Проверить подключение *️⃣', callback_data='connected_check')
@@ -126,6 +175,7 @@ def new_user_btn(msg):
 # Стать партнером
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_false')
 def be_partner_btn(msg):
+    bot.answer_callback_query(msg.id)
     partner_reg = types.InlineKeyboardMarkup(row_width=1)
     partner_button = types.InlineKeyboardButton("Cтать партнером 🤝", url='panpartner.ru')
     partner_reg.add(partner_button)
@@ -135,6 +185,7 @@ def be_partner_btn(msg):
 # Ошибка подключения
 @bot.callback_query_handler(func=lambda msg: msg.data == 'connected_check')
 def connection_check_btn(msg):
+    bot.answer_callback_query(msg.id)
     try:
         if connected_check(msg):
             bot.send_message(msg.from_user.id, text=MainConfig.CONNECTION_TEXT, parse_mode=['html'])
