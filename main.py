@@ -93,6 +93,22 @@ def admin(msg):
                 bot.send_message(msg.from_user.id, text=e)
 
 
+@bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
+def events_approve(msg):
+    print(msg.data.replace('confirm ', ''))
+    print(msg.from_user.id)
+    bot.answer_callback_query(msg.id, show_alert=True, text='Test')
+    bot.send_message(msg.from_user.id, text='Запись подтверждена!')
+
+
+@bot.callback_query_handler(func=lambda msg: 'cancel' in msg.data)
+def events_approve(msg):
+    print(msg.data.replace('cancel ', ''))
+    print(msg.from_user.id)
+    bot.answer_callback_query(msg.id, show_alert=True, text='Test2')
+    bot.send_message(msg.from_user.id, text='Запись отменена!')
+
+
 # Подкючение к боту
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_true' or msg.data == 'bot_reconnect')
 def new_user_btn(msg):
