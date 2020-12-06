@@ -64,3 +64,5 @@ if telebot.TeleBot(TOKEN_PROD):
     ask = input('Подтверди отправку на прод: ')
     if ask == 'y':
         send_test()
+    else:
+        print('Рассылка не была отправлена')
