@@ -10,6 +10,8 @@ from usersOnline import UsersOnline
 from usersReload import UsersReload
 from version import *
 # from events import Events
+import time
+from dutyToDay import Duty
 
 
 bot = telebot.TeleBot(MainConfig.TOKEN)
@@ -37,29 +39,32 @@ def posts_from_channels(msg):
     users = GetUsers()
     try:
         if msg.content_type == 'photo':
-            if '#стартпродаж' in msg.caption:
+            if '#стартпродаж' in msg.caption or '#новыйпул' in msg.caption:
                 for user in users.get_users():
                     try:
                         bot.forward_message(user, msg.chat.id, msg.message_id)
+                        time.sleep(0.05)
                     except Exception as e:
                         bot.send_message(MainConfig.ADMIN_ID,
                                          f'ID {user} не найден при попытке отправить инфу про старты\n'
                                          f'Ошибка: {e}. Тип рассылки: Фото')
 
         if msg.content_type == 'video':
-            if '#стартпродаж' in msg.caption:
+            if '#стартпродаж' in msg.caption or '#новыйпул' in msg.caption:
                 for user in users.get_users():
                     try:
                         bot.forward_message(user, msg.chat.id, msg.message_id)
+                        time.sleep(0.05)
                     except Exception as e:
                         bot.send_message(MainConfig.ADMIN_ID,
                                          f'ID {user} не найден при попытке отправить инфу про старты\n'
                                          f'Ошибка: {e}. Тип рассылки: Видео')
 
-        if '#стартпродаж' in msg.text:
+        if '#стартпродаж' in msg.text or '#новыйпул' in msg.text:
             for user in MainConfig.ADMINS:
                 try:
                     bot.forward_message(user, msg.chat.id, msg.message_id)
+                    time.sleep(0.05)
                 except Exception as e:
                     bot.send_message(MainConfig.ADMIN_ID,
                                      f'ID {user} не найден при попытке отправить инфу про старты\n'
@@ -139,21 +144,14 @@ def admin(msg):
             except Exception as e:
                 bot.send_message(msg.from_user.id, text=e)
 
-
-@bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
-def events_approve(msg):
-    print(msg.data.replace('confirm ', ''))
-    print(msg.from_user.id)
-    bot.answer_callback_query(msg.id, show_alert=True, text='Test')
-    bot.send_message(msg.from_user.id, text='Запись подтверждена!')
-
-
-@bot.callback_query_handler(func=lambda msg: 'cancel' in msg.data)
-def events_approve(msg):
-    print(msg.data.replace('cancel ', ''))
-    print(msg.from_user.id)
-    bot.answer_callback_query(msg.id, show_alert=True, text='Test2')
-    bot.send_message(msg.from_user.id, text='Запись отменена!')
+    if 'duty' in msg.text:
+        try:
+            managerOnDuty = Duty()
+            data = managerOnDuty.get_duty()
+            bot.send_message(msg.from_user.id, text=data, parse_mode=['html'])
+        except Exception as e:
+            bot.send_message(msg.from_user.id, text='Ой, схемы замкнуло 🤖\nПопробуйте еще раз!')
+            bot.send_message(MainConfig.ADMIN_ID, f'Запрос дежурных провалился: {e}')
 
 
 # Подкючение к боту

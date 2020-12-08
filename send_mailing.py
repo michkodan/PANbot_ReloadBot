@@ -3,7 +3,7 @@ from config import MainConfig
 from mailing import GetUsers
 from telebot import types
 import requests
-import datetime
+import time
 
 TOKEN_DEV = '722289223:AAFeCCpDo4KMfEwaVjbNfTBwrUJSyII_jT0'
 TOKEN_PROD = '1153458429:AAHG3t6S9rin--wkduqQMLdk2w5bHbJQ4tA'
@@ -55,6 +55,7 @@ def send_mailing():
     for user in users.get_users():
         try:
             bot.send_message(user, text=text, reply_markup=link_btn, parse_mode=['html'])
+            time.sleep(0.05)
         except Exception as e:
             print(e)
     bot.send_message(MainConfig.ADMIN_ID, text='Рассылка завершена!')

@@ -1,5 +1,5 @@
 class MainConfig:
-    TOKEN = '722289223:AAHb0GG5Zm1YM-bDVNTNBuU6WblwpM2btGE'
+    TOKEN = '722289223:AAFeCCpDo4KMfEwaVjbNfTBwrUJSyII_jT0'
     URL = 'https://dev2.panpartner.ru/bitrix/services/main/ajax.php?c=panpartner:'
     LOGIN = 'michkodan@1-an.ru'
     PASSWORD = 'Michkodan(29)'
