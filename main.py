@@ -13,10 +13,10 @@ from version import *
 import time
 from dutyToDay import Duty
 
-
 bot = telebot.TeleBot(MainConfig.TOKEN)
 bot.get_updates(allowed_updates=['channel_post', 'message', 'callback_query'])
 
+# УСТАНАВЛИВАЕМ ВЕРСИЮ БОТА
 try:
     get_version()
     set_version()
@@ -33,7 +33,7 @@ def send_welcome(msg):
                          reply_markup=buttons.welcome_buttons)
 
 
-# Забираем посты про старты из телеграм канала
+# ЗАБИРАЕМ ПОСТЫ ИЗ ТЕЛЕГРАМ КАНАЛА
 @bot.channel_post_handler(content_types=['text', 'photo', 'video'])
 def posts_from_channels(msg):
     users = GetUsers()
@@ -74,30 +74,7 @@ def posts_from_channels(msg):
         pass
 
 
-# Мероприятия
-# @bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
-# def events_approve(msg):
-#     try:
-#         event_id = msg.data.replace('confirm ', '')
-#         user_id = msg.from_user.id
-#         confirm = Events(int(event_id), int(user_id))
-#         bot.send_message(msg.from_user.id, text=confirm.confirm_entry())
-#     except Exception as e:
-#         bot.send_message(msg.from_user.id, text='Подтвердить запись невозможно')
-#
-#
-# @bot.callback_query_handler(func=lambda msg: 'cancel' in msg.data)
-# def events_approve(msg):
-#     try:
-#         event_id = msg.data.replace('cancel ', '')
-#         user_id = msg.from_user.id
-#         confirm = Events(int(event_id), int(user_id))
-#         bot.send_message(msg.from_user.id, text=confirm.cancel_entry())
-#     except Exception as e:
-#         bot.send_message(msg.from_user.id, text='Отменить запись невозможно')
-
-
-# Административные команды
+# АДМИНИСТРАТИВНЫЕ КОМАНДЫ
 @bot.message_handler(content_types='text')
 def admin(msg):
     if msg.from_user.id in MainConfig.ADMINS:
@@ -154,7 +131,19 @@ def admin(msg):
             bot.send_message(MainConfig.ADMIN_ID, f'Запрос дежурных провалился: {e}')
 
 
-# Подкючение к боту
+# ПИНИМ СООБЩЕНИЕ С КОМАНДАМИ
+@bot.callback_query_handler(func=lambda msg: msg.data == 'func_list')
+def pin_message(msg):
+    bot.answer_callback_query(msg.id)
+    try:
+        bot.pin_chat_message(msg.message.chat.id, msg.message.message_id)
+        bot.edit_message_reply_markup(msg.message.chat.id, msg.message.message_id)
+    except Exception as e:
+        bot.send_message(MainConfig.ADMIN_ID, f'Бот упал после попытки закрепить сообщение:\n'
+                                              f'{e}')
+
+
+# ПОДКЛЮЧЕНИЕ К БОТУ
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_true' or msg.data == 'bot_reconnect')
 def new_user_btn(msg):
     bot.answer_callback_query(msg.id)
@@ -163,14 +152,13 @@ def new_user_btn(msg):
     # link = 'dev2.panpartner.ru/app/bot/' + str(msg.from_user.id)
     bot_connected = types.InlineKeyboardMarkup(row_width=1)
     url_button = types.InlineKeyboardButton(text="Подключится к боту 🤖", url=link)
-    connected_button = types.InlineKeyboardButton('Проверить подключение *️⃣', callback_data='connected_check')
-    bot_connected.add(url_button, connected_button)
+    bot_connected.add(url_button)
     bot.send_message(msg.message.chat.id, f'Для подключение бота к Вашему аккаунту panpartner, '
                                           f' перейдите по<a href="{link}"> ссылке!</a>',
                      parse_mode=['html'], reply_markup=bot_connected)
 
 
-# Стать партнером
+# СТАТЬ ПАРТНЕРОМ
 @bot.callback_query_handler(func=lambda msg: msg.data == 'partner_false')
 def be_partner_btn(msg):
     bot.answer_callback_query(msg.id)
@@ -180,7 +168,7 @@ def be_partner_btn(msg):
     bot.send_message(msg.message.chat.id, MainConfig.NEW_PARTNER_TEXT, parse_mode=['html'], reply_markup=partner_reg)
 
 
-# Ошибка подключения
+# ОШИБКА ПОДКЛЮЧЕНИЯ
 @bot.callback_query_handler(func=lambda msg: msg.data == 'connected_check')
 def connection_check_btn(msg):
     bot.answer_callback_query(msg.id)
@@ -199,10 +187,33 @@ def connection_check_btn(msg):
                                               f'{e}')
 
 
-# Проверка наличия поключения к базе
+# ПРОВЕРКА НАЛИЧИЯ ПОДКЛЮЧЕНИЯ К БАЗЕ
 def connected_check(msg):
     user_id = CheckConnect(msg.from_user.id)
     return user_id.connection_check()
+
+
+# МЕРОПРИЯТИЯ
+@bot.callback_query_handler(func=lambda msg: 'confirm' in msg.data)
+def events_confirm(msg):
+    try:
+        event_id = msg.data.replace('confirm ', '')
+        user_id = msg.from_user.id
+        confirm = Events(int(user_id), int(event_id))
+        bot.send_message(msg.from_user.id, text=confirm.confirm_entry())
+    except Exception as e:
+        bot.send_message(msg.from_user.id, text='Произошла ошибка 😢')
+
+
+@bot.callback_query_handler(func=lambda msg: 'cancel' in msg.data)
+def events_cancel(msg):
+    try:
+        event_id = msg.data.replace('cancel ', '')
+        user_id = msg.from_user.id
+        cancel = Events(int(user_id), int(event_id))
+        bot.send_message(msg.from_user.id, text=cancel.cancel_entry())
+    except Exception as e:
+        bot.send_message(msg.from_user.id, text='Произошла ошибка 😢')
 
 
 if __name__ == '__main__':

@@ -9,33 +9,35 @@ class Events(MainConfig):
         self.event_id = event_id
 
     def confirm_entry(self):
-        url = MainConfig.URL + 'telegram.bot.ajax&mode=class&action=checkConnect'
+        url = MainConfig.URL + 'telegram.bot.ajax&mode=class&action=confirmEvent'
         params = {
-            'user_id': self.user_id,
-            'event_id': self.event_id
+            'telegramId': self.user_id,
+            'eventId': self.event_id
         }
         try:
             request = requests.get(url, params=params, auth=(MainConfig.LOGIN, MainConfig.PASSWORD))
             data = request.json()
-            if data['data']['status']:
-                return True
+            print(data)
+            if data['status'] == 'success':
+                return data['data']['message'] + ' ✅'
             else:
-                return False
+                return data['errors'][0]['message'] + ' ❌'
         except Exception as e:
-            return e
+            return 'Произошла ошибка 😢'
 
     def cancel_entry(self):
-        url = MainConfig.URL + 'telegram.bot.ajax&mode=class&action=checkConnect'
+        url = MainConfig.URL + 'telegram.bot.ajax&mode=class&action=confirmEvent'
         params = {
-            'user_id': self.user_id,
-            'event_id': self.event_id
+            'telegramId': self.user_id,
+            'eventId': self.event_id
         }
         try:
             request = requests.get(url, params=params, auth=(MainConfig.LOGIN, MainConfig.PASSWORD))
             data = request.json()
-            if data['data']['status']:
-                return True
+            print(data)
+            if data['status'] == 'success':
+                return data['data']['message'] + ' ✅'
             else:
-                return False
+                return data['errors'][0]['message'] + ' ❌'
         except Exception as e:
-            return e
+            return 'Произошла ошибка 😢'
